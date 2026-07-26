@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -28,29 +28,26 @@ export default function Dashboard() {
   const { t } = useLanguage();
   const queryClient = useQueryClient();
 
-  const { data: appointments = [] } = useQuery({
-  queryKey: ['my-appointments'],
-  queryFn: async () => [
-    {
-      id: 1,
-      doctor_name: "Dr. Rajesh Kumar",
-      hospital_name: "Victoria Hospital",
-      appointment_date: "2026-07-30",
-      appointment_time: "10:00 AM",
-      status: "confirmed",
-      token_number: 101,
-    },
-    {
-      id: 2,
-      doctor_name: "Dr. Priya Sharma",
-      hospital_name: "Bowring Hospital",
-      appointment_date: "2026-07-20",
-      appointment_time: "11:30 AM",
-      status: "completed",
-      token_number: 102,
-    }
-  ],
-});
+  const [appointments, setAppointments] = useState([
+  {
+    id: 1,
+    doctor_name: "Dr. Rajesh Kumar",
+    hospital_name: "Victoria Hospital",
+    appointment_date: "2026-07-30",
+    appointment_time: "10:00 AM",
+    status: "confirmed",
+    token_number: 101,
+  },
+  {
+    id: 2,
+    doctor_name: "Dr. Priya Sharma",
+    hospital_name: "Bowring Hospital",
+    appointment_date: "2026-07-20",
+    appointment_time: "11:30 AM",
+    status: "completed",
+    token_number: 102,
+  },
+]);
 
 const { data: prescriptions = [] } = useQuery({
   queryKey: ['my-prescriptions'],
@@ -71,23 +68,42 @@ const { data: prescriptions = [] } = useQuery({
     }
   ],
 });
- const cancelMutation = useMutation({
+const cancelMutation = useMutation({
   mutationFn: async (id) => {
-    return { success: true };
+    return id;
   },
-  onSuccess: () => {
+
+  onSuccess: (id) => {
+    setAppointments((prev) =>
+      prev.map((appointment) =>
+        appointment.id === id
+          ? { ...appointment, status: "cancelled" }
+          : appointment
+      )
+    );
+
     toast.success("Appointment cancelled");
   },
 });
   const today = new Date().toISOString().split('T')[0];
-  const upcoming = appointments.filter(a => a.appointment_date >= today && a.status !== 'cancelled');
-  const past = appointments.filter(a => a.appointment_date < today || a.status === 'completed');
-  const stats = {
-    total: appointments.length,
-    upcoming: upcoming.length,
-    completed: appointments.filter(a => a.status === 'completed').length,
-    cancelled: appointments.filter(a => a.status === 'cancelled').length,
-  };
+
+const upcoming = appointments.filter(
+  (a) => a.appointment_date >= today && a.status !== "cancelled"
+);
+
+const past = appointments.filter(
+  (a) =>
+    a.appointment_date < today ||
+    a.status === "completed" ||
+    a.status === "cancelled"
+);
+
+const stats = {
+  total: appointments.length,
+  upcoming: upcoming.length,
+  completed: appointments.filter((a) => a.status === "completed").length,
+  cancelled: appointments.filter((a) => a.status === "cancelled").length,
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-8">

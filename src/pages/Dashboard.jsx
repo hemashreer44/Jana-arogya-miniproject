@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from "react";
 import { useAuth } from '@/lib/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -28,7 +28,7 @@ export default function Dashboard() {
   const { t } = useLanguage();
   const queryClient = useQueryClient();
 
-  const [appointments, setAppointments] = useState([
+  const defaultAppointments = [
   {
     id: 1,
     doctor_name: "Dr. Rajesh Kumar",
@@ -47,8 +47,15 @@ export default function Dashboard() {
     status: "completed",
     token_number: 102,
   },
-]);
+];
 
+const [appointments, setAppointments] = useState(() => {
+  const saved = localStorage.getItem("appointments");
+  return saved ? JSON.parse(saved) : defaultAppointments;
+});
+useEffect(() => {
+  localStorage.setItem("appointments", JSON.stringify(appointments));
+}, [appointments]);
 const { data: prescriptions = [] } = useQuery({
   queryKey: ['my-prescriptions'],
   queryFn: async () => [
